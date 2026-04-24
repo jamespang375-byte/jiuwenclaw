@@ -252,6 +252,7 @@ class WebChannel(BaseChannel):
             self.config.port,
             ping_interval=20,
             ping_timeout=20,
+            max_size=50 * 1024 * 1024,  # 支持最大 50MB 的 WebSocket 消息（图片上传）
         )
         self._running = True
         logger.info(
@@ -450,7 +451,9 @@ class WebChannel(BaseChannel):
         if not isinstance(session_id, str) or not session_id:
             session_id = self._make_session_id()
 
+        logger.info("[WebChannel] _handle_raw_message received params keys: %s, has_files: %s", list(params.keys()), "files" in params)
         params = await self._process_files(params)
+        logger.info("[WebChannel] _process_files done, params keys: %s, files_count: %s", list(params.keys()), len(params.get("files", [])))
 
         user_message = Message(
             id=req_id,

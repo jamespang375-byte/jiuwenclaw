@@ -158,9 +158,9 @@ export function ChatPanel({
   }, [historyPager, messages.length]);
 
   // 包装发送消息函数，添加滚动逻辑
-  const handleSendMessage = useCallback((content: string) => {
+  const handleSendMessage = useCallback((content: string, images?: ImageAttachment[]) => {
     setIsSending(true);
-    onSendMessage(content);
+    onSendMessage(content, images);
   }, [onSendMessage]);
 
   // 当发送消息时强制滚动到底部

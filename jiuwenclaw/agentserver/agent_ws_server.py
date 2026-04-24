@@ -171,6 +171,7 @@ class AgentWebSocketServer:
                 self._port,
                 ping_interval=self._ping_interval,
                 ping_timeout=self._ping_timeout,
+                max_size=50 * 1024 * 1024,  # 50MB, 支持图片等大消息传输
             )
         except ImportError:
             import websockets
@@ -180,6 +181,7 @@ class AgentWebSocketServer:
                 self._port,
                 ping_interval=self._ping_interval,
                 ping_timeout=self._ping_timeout,
+                max_size=50 * 1024 * 1024,  # 50MB, 支持图片等大消息传输
             )
         logger.info(
             "[AgentWebSocketServer] 已启动: ws://%s:%s", self._host, self._port

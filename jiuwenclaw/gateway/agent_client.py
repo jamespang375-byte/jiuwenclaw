@@ -24,7 +24,7 @@ from jiuwenclaw.schema.agent import AgentResponse, AgentResponseChunk
 logger = logging.getLogger(__name__)
 _STREAM_TRAILING_MESSAGE_GRACE_SECONDS = 0.7
 _UNARY_REQUEST_TIMEOUT_SECONDS = 60.0
-_WS_MAX_SIZE = 8 * 2**20
+_WS_MAX_SIZE = 50 * 1024 * 1024  # 50MB, 支持图片等大消息传输
 
 
 def _wire_request_id_key(request_id: Any) -> str:
