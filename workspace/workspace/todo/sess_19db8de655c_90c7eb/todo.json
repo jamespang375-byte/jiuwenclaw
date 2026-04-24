@@ -1,0 +1,27 @@
+
+[
+  {
+    "id": "7d9a4039-56f5-47d0-af27-313fe12ab213",
+    "content": "执行电动自行车安全隐患扫描",
+    "activeForm": "Executing 执行电动自行车安全隐患扫描",
+    "status": "in_progress",
+    "createdAt": "2026-04-23T05:45:44.482596+00:00",
+    "updatedAt": "2026-04-23T05:45:44.482596+00:00"
+  },
+  {
+    "id": "ae19d662-2ad1-4d20-855f-9b8a2fa6d25c",
+    "content": "生成扫描结果报告",
+    "activeForm": "Executing 生成扫描结果报告",
+    "status": "pending",
+    "createdAt": "2026-04-23T05:45:44.482695+00:00",
+    "updatedAt": "2026-04-23T05:45:44.482695+00:00"
+  },
+  {
+    "id": "b0ddd672-345d-407b-badf-55229009d140",
+    "content": "获取卫星图片并生成可视化地图",
+    "activeForm": "Executing 获取卫星图片并生成可视化地图",
+    "status": "pending",
+    "createdAt": "2026-04-23T05:45:44.482704+00:00",
+    "updatedAt": "2026-04-23T05:45:44.482704+00:00"
+  }
+]

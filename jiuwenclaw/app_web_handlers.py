@@ -489,7 +489,7 @@ def _register_web_handlers(bind: WebHandlersBindParams) -> None:
         """
         if max_tokens_bounds is None:
             max_tokens_bounds = {
-                "infimum_max_tokens": 1,
+                "infimum_max_tokens": 8,
                 "supremum_max_tokens": 16,
             }
 
@@ -497,7 +497,7 @@ def _register_web_handlers(bind: WebHandlersBindParams) -> None:
             infimum_max_tokens = max_tokens_bounds.get("infimum_max_tokens")
             supremum_max_tokens = max_tokens_bounds.get("supremum_max_tokens")
         else:
-            infimum_max_tokens = 1
+            infimum_max_tokens = 8
             supremum_max_tokens = 16
 
         if not isinstance(params, dict):
@@ -585,7 +585,15 @@ def _register_web_handlers(bind: WebHandlersBindParams) -> None:
             content = resp.get("content", "")
         else:
             content = str(resp)
-        if not (isinstance(content, str) and content.strip()):
+
+        # Reasoning models may return empty content while reasoning_content is present
+        reasoning_content = ""
+        if hasattr(resp, "reasoning_content"):
+            reasoning_content = resp.reasoning_content or ""
+        elif isinstance(resp, dict):
+            reasoning_content = resp.get("reasoning_content", "") or ""
+
+        if not (isinstance(content, str) and content.strip()) and not (isinstance(reasoning_content, str) and reasoning_content.strip()):
             await channel.send_response(
                 ws, req_id, ok=False,
                 error="Empty response from model",

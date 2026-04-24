@@ -69,8 +69,15 @@ _SKILL_ROUTES: dict[ReqMethod, str] = {
 }
 
 
-def build_user_prompt(content: str, files: dict, channel: str, language: str) -> str:
-    """Build user prompt for the agent."""
+def build_user_prompt(content: str, files: Any, channel: str, language: str) -> str:
+    """Build user prompt for the agent.
+
+    Args:
+        content: 用户消息正文。
+        files: 附件信息，可以是 list[dict] 或 dict（兼容各通道）。
+        channel: 消息来源通道。
+        language: 语言标识（zh/en）。
+    """
     if language == "zh":
         prompt = "你收到一条消息：\n"
     else:
@@ -85,16 +92,54 @@ def build_user_prompt(content: str, files: dict, channel: str, language: str) ->
             },
             ensure_ascii=False,
         )
-    return prompt + json.dumps(
-        {
-            "source": channel,
-            "preferred_response_language": language,
-            "content": content,
-            "files_updated_by_user": json.dumps(files, ensure_ascii=False),
-            "type": "user input",
-        },
-        ensure_ascii=False,
-    )
+
+    # 统一把 files 转成 list[dict]
+    file_list: list[dict] = []
+    if isinstance(files, list):
+        file_list = [f for f in files if isinstance(f, dict)]
+    elif isinstance(files, dict):
+        file_list = [files]
+
+    # 为图片附件生成明确的工具调用提示，让 Agent 能主动分析图片
+    attachment_hints: list[str] = []
+    for f in file_list:
+        path = f.get("path", "")
+        name = f.get("name", "") or (path.split("/")[-1] if path else "unknown")
+        category = f.get("file_category", "")
+        mime = f.get("mime_type", "")
+        is_image = category == "image" or (mime and mime.startswith("image/"))
+        if is_image:
+            if language == "zh":
+                attachment_hints.append(
+                    f"用户上传了图片：{name}（路径：{path}）。如需分析图片内容，"
+                    f"请调用 visual_question_answering 工具，参数 image_path_or_url='{path}'，"
+                    f"question 填写用户的具体问题。"
+                )
+            else:
+                attachment_hints.append(
+                    f"The user uploaded an image: {name} (path: {path}). To analyze it, "
+                    f"call the visual_question_answering tool with image_path_or_url='{path}' "
+                    f"and the user's question."
+                )
+        else:
+            if language == "zh":
+                attachment_hints.append(f"用户上传了文件：{name}（路径：{path}）。")
+            else:
+                attachment_hints.append(f"The user uploaded a file: {name} (path: {path}).")
+
+    base_payload = {
+        "source": channel,
+        "preferred_response_language": language,
+        "content": content,
+        "files_updated_by_user": json.dumps(file_list, ensure_ascii=False) if file_list else "",
+        "type": "user input",
+    }
+
+    result = prompt + json.dumps(base_payload, ensure_ascii=False)
+    if attachment_hints:
+        header = "\n\n【附件提示】" if language == "zh" else "\n\n[Attachment Hints]"
+        result += header + "\n" + "\n".join(f"- {h}" for h in attachment_hints)
+    return result
 
 
 class JiuWenClaw:

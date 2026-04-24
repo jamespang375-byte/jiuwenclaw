@@ -1,0 +1,43 @@
+
+[
+  {
+    "id": "6c5338a1-d165-4a97-8221-f0db57c8b3ac",
+    "content": "组建电动车安全隐患分析团队",
+    "activeForm": "Executing 组建电动车安全隐患分析团队",
+    "status": "in_progress",
+    "createdAt": "2026-04-23T04:33:57.087991+00:00",
+    "updatedAt": "2026-04-23T04:33:57.087991+00:00"
+  },
+  {
+    "id": "296fca73-93fd-4e87-9a7d-8a3585358c98",
+    "content": "感知专家扫描隐患数据",
+    "activeForm": "Executing 感知专家扫描隐患数据",
+    "status": "pending",
+    "createdAt": "2026-04-23T04:33:57.088071+00:00",
+    "updatedAt": "2026-04-23T04:33:57.088071+00:00"
+  },
+  {
+    "id": "2e94ae4d-e23e-46fe-93dd-4a99f1e44afa",
+    "content": "决策专家生成处置方案",
+    "activeForm": "Executing 决策专家生成处置方案",
+    "status": "pending",
+    "createdAt": "2026-04-23T04:33:57.088088+00:00",
+    "updatedAt": "2026-04-23T04:33:57.088088+00:00"
+  },
+  {
+    "id": "d121d8c6-00c0-41fc-83dc-60aa387ce892",
+    "content": "执行专家制定行动计划",
+    "activeForm": "Executing 执行专家制定行动计划",
+    "status": "pending",
+    "createdAt": "2026-04-23T04:33:57.088105+00:00",
+    "updatedAt": "2026-04-23T04:33:57.088105+00:00"
+  },
+  {
+    "id": "e2ac790b-275f-4eaf-afb1-882b7b61aa50",
+    "content": "复盘专家总结分析报告",
+    "activeForm": "Executing 复盘专家总结分析报告",
+    "status": "pending",
+    "createdAt": "2026-04-23T04:33:57.088121+00:00",
+    "updatedAt": "2026-04-23T04:33:57.088121+00:00"
+  }
+]

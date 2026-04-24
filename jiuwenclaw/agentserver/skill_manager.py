@@ -1186,18 +1186,53 @@ class SkillManager:
             return {"success": False, "detail": f"路径不存在: {raw_path}"}
 
         if src.is_file():
-            # 单文件导入：解析后放入以 name 命名的目录
-            meta = self._parse_skill_md(src)
-            if meta is None:
-                return {"success": False, "detail": "无法解析 skill 文件"}
-            skill_name = meta.get("name", src.stem)
-            dest = self._skills_dir / skill_name
-            if dest.exists():
-                if not force:
-                    return {"success": False, "detail": f"skill {skill_name} 已存在"}
-                _safe_rmtree(dest)
-            dest.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(src, dest / src.name)
+            if src.suffix.lower() == ".zip":
+                # ZIP 文件导入：先解压到临时目录，再按目录导入处理
+                import zipfile
+                import tempfile
+
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    try:
+                        with zipfile.ZipFile(src, "r") as zf:
+                            zf.extractall(tmpdir)
+                    except zipfile.BadZipFile:
+                        return {"success": False, "detail": f"ZIP 文件损坏或格式不正确: {raw_path}"}
+
+                    extracted = Path(tmpdir)
+                    # 优先查找根目录 SKILL.md；没有则递归查找第一个
+                    md = self._try_find_skill_file(extracted)
+                    if md is None:
+                        # 尝试在子目录中查找（有些 ZIP 内部有 skills/xxx/ 结构）
+                        for subdir in extracted.iterdir():
+                            if subdir.is_dir():
+                                md = self._try_find_skill_file(subdir)
+                                if md is not None:
+                                    extracted = subdir
+                                    break
+                    if md is None:
+                        return {"success": False, "detail": f"ZIP 中未找到 SKILL.md: {raw_path}"}
+
+                    meta = self._parse_skill_md(md) or {}
+                    skill_name = meta.get("name", src.stem)
+                    dest = self._skills_dir / skill_name
+                    if dest.exists():
+                        if not force:
+                            return {"success": False, "detail": f"skill {skill_name} 已存在"}
+                        _safe_rmtree(dest)
+                    shutil.copytree(extracted, dest)
+            else:
+                # 单文件导入：解析后放入以 name 命名的目录
+                meta = self._parse_skill_md(src)
+                if meta is None:
+                    return {"success": False, "detail": "无法解析 skill 文件"}
+                skill_name = meta.get("name", src.stem)
+                dest = self._skills_dir / skill_name
+                if dest.exists():
+                    if not force:
+                        return {"success": False, "detail": f"skill {skill_name} 已存在"}
+                    _safe_rmtree(dest)
+                dest.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dest / src.name)
         elif src.is_dir():
             md = self._try_find_skill_file(src)
             if md is None:

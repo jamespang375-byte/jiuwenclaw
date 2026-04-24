@@ -1,0 +1,43 @@
+
+[
+  {
+    "id": "2142f460-23ed-4a5e-b287-bc5c0f70768e",
+    "content": "阅读 ebike-perception 技能文档，了解数据扫描方法",
+    "activeForm": "Executing 阅读 ebike-perception 技能文档，了解数据扫描方法",
+    "status": "completed",
+    "createdAt": "2026-04-23T07:45:16.452961+00:00",
+    "updatedAt": "2026-04-23T07:54:03.724000+00:00"
+  },
+  {
+    "id": "1fc07050-5d5c-433c-9358-95b7454d3a7f",
+    "content": "执行深圳市各区域电动自行车隐患数据扫描",
+    "activeForm": "Executing 执行深圳市各区域电动自行车隐患数据扫描",
+    "status": "completed",
+    "createdAt": "2026-04-23T07:45:16.453021+00:00",
+    "updatedAt": "2026-04-23T07:54:03.724000+00:00"
+  },
+  {
+    "id": "0dcf8c18-3947-445e-a63b-05107c1afc2e",
+    "content": "整理和分析隐患数据",
+    "activeForm": "Executing 整理和分析隐患数据",
+    "status": "completed",
+    "createdAt": "2026-04-23T07:45:16.453033+00:00",
+    "updatedAt": "2026-04-23T07:54:03.724000+00:00"
+  },
+  {
+    "id": "900bcd90-9941-4077-b30c-c598ca75b097",
+    "content": "获取深圳市卫星图资源",
+    "activeForm": "Executing 获取深圳市卫星图资源",
+    "status": "completed",
+    "createdAt": "2026-04-23T07:45:16.453041+00:00",
+    "updatedAt": "2026-04-23T08:10:39.315659+00:00"
+  },
+  {
+    "id": "d5366e42-8d43-4eb9-9ed0-016e5cefe613",
+    "content": "生成带卫星图标注的PDF报告",
+    "activeForm": "Executing 生成带卫星图标注的PDF报告",
+    "status": "completed",
+    "createdAt": "2026-04-23T07:45:16.453047+00:00",
+    "updatedAt": "2026-04-23T08:10:39.315659+00:00"
+  }
+]

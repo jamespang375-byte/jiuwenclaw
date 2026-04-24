@@ -1,0 +1,73 @@
+{
+  "scan_date": "2026-04-26",
+  "focus_area": "木棉岭社区",
+  "scan_type": "all",
+  "data_sources": {
+    "fire_alarms_119": 13,
+    "complaints_12345": 0,
+    "traffic_violations": 0,
+    "fire_safety_records": 1,
+    "battery_lifecycle": 1,
+    "ccc_certificates": 4,
+    "battery_recycling": 138
+  },
+  "hotspots": [
+    {
+      "hot_spot_id": "HS-MIANLIN-FLYWIRE-001",
+      "type": "飞线充电",
+      "type_code": "fly_wire_cluster",
+      "community": "木棉岭社区",
+      "street": "东晓街道",
+      "district": "罗湖区",
+      "event_count": 82,
+      "threshold": 5,
+      "severity": "critical"
+    },
+    {
+      "hot_spot_id": "HS-MIANLIN-BATTERY-001",
+      "type": "超期电池",
+      "type_code": "expired_battery_cluster",
+      "community": "木棉岭社区",
+      "street": "东晓街道",
+      "district": "罗湖区",
+      "event_count": 326,
+      "threshold": 5,
+      "severity": "warning"
+    },
+    {
+      "hot_spot_id": "HS-MIANLIN-NO3C-001",
+      "type": "无3C认证",
+      "type_code": "no_3c_cluster",
+      "community": "木棉岭社区",
+      "street": "东晓街道",
+      "district": "罗湖区",
+      "event_count": 144,
+      "threshold": 3,
+      "severity": "warning"
+    },
+    {
+      "hot_spot_id": "HS20260422171400987050",
+      "type": "非法改装",
+      "type_code": "illegal_modification_cluster",
+      "community": "木棉岭社区",
+      "street": null,
+      "district": "罗湖区",
+      "event_count": 12,
+      "threshold": 10,
+      "severity": "warning"
+    }
+  ],
+  "thresholds": {
+    "fly_wire": 10,
+    "illegal_modification": 3,
+    "expired_battery": 25,
+    "no_3c": 25
+  },
+  "summary": {
+    "total_hotspots": 4,
+    "critical_hotspots": 1,
+    "warning_hotspots": 3,
+    "total_events": 564,
+    "scan_timestamp": "2026-04-23T12:30:42.916263"
+  }
+}

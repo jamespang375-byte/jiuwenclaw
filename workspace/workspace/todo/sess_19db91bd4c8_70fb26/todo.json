@@ -1,0 +1,35 @@
+
+[
+  {
+    "id": "bb6337e6-4c53-4e87-abef-fbfe8cf61cad",
+    "content": "Step 1: 感知阶段 - 扫描数据库识别安全隐患热点",
+    "activeForm": "Executing Step 1: 感知阶段 - 扫描数据库识别安全隐患热点",
+    "status": "in_progress",
+    "createdAt": "2026-04-23T07:44:29.929247+00:00",
+    "updatedAt": "2026-04-23T07:44:29.929247+00:00"
+  },
+  {
+    "id": "2a2cc2cb-5aa5-415e-84ba-90db233ee5ab",
+    "content": "Step 2: 决策阶段 - 基于RAG生成联合处置方案",
+    "activeForm": "Executing Step 2: 决策阶段 - 基于RAG生成联合处置方案",
+    "status": "pending",
+    "createdAt": "2026-04-23T07:44:29.929295+00:00",
+    "updatedAt": "2026-04-23T07:44:29.929295+00:00"
+  },
+  {
+    "id": "bb30bbaa-0538-4e71-bac9-17bf0b33ac11",
+    "content": "Step 3: 执行阶段 - 心跳派发工单闭环处置",
+    "activeForm": "Executing Step 3: 执行阶段 - 心跳派发工单闭环处置",
+    "status": "pending",
+    "createdAt": "2026-04-23T07:44:29.929310+00:00",
+    "updatedAt": "2026-04-23T07:44:29.929310+00:00"
+  },
+  {
+    "id": "75f46dd1-c621-4b7b-a1db-e4333b1ea9de",
+    "content": "Step 4: 复盘阶段 - 成效评估策略优化",
+    "activeForm": "Executing Step 4: 复盘阶段 - 成效评估策略优化",
+    "status": "pending",
+    "createdAt": "2026-04-23T07:44:29.929318+00:00",
+    "updatedAt": "2026-04-23T07:44:29.929318+00:00"
+  }
+]

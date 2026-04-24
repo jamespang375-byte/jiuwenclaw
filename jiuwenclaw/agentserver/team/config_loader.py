@@ -67,6 +67,10 @@ def _build_default_model_dict(config_base: dict[str, Any]) -> dict[str, Any]:
         model_name,
         model_client_config.get("client_provider", "unknown"),
     )
+    # 强制修复 custom_headers 类型：空字符串 → 空字典
+    if not isinstance(model_client_config.get("custom_headers"), dict):
+        model_client_config["custom_headers"] = {}
+
     return {
         "model_client_config": model_client_config,
         "model_request_config": model_request_config,

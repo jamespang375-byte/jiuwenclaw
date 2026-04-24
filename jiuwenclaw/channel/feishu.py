@@ -1023,6 +1023,18 @@ class FeishuChannel(BaseChannel):
 
         last_item = items[-1]
         merged_metadata = dict(last_item["metadata"])
+
+        # 合并所有附件(file_info)，避免图片在合并窗口中丢失
+        all_file_infos: list[dict] = []
+        for item in items:
+            fi = item["metadata"].get("file_info")
+            if fi:
+                if isinstance(fi, list):
+                    all_file_infos.extend(f for f in fi if isinstance(f, dict))
+                elif isinstance(fi, dict):
+                    all_file_infos.append(fi)
+        if all_file_infos:
+            merged_metadata["file_info"] = all_file_infos
         merged_metadata["merged_message_ids"] = [
             item["metadata"].get("message_id", "") for item in items
         ]
@@ -1087,6 +1099,15 @@ class FeishuChannel(BaseChannel):
         enriched_metadata["im_sender_user_id"] = open_id
         enriched_metadata["im_thread_id"] = chat_id
 
+        # 提取附件信息并放入 params，确保后端能拿到图片/文件路径
+        file_info = enriched_metadata.get("file_info")
+        params = {"content": merged_content, "query": merged_content}
+        if file_info:
+            if isinstance(file_info, list):
+                params["files"] = file_info
+            elif isinstance(file_info, dict):
+                params["files"] = [file_info]
+
         inbound = FeishuInboundMessage(
             message_id=enriched_metadata.get("message_id", ""),
             chat_id=chat_id,
@@ -1094,6 +1115,7 @@ class FeishuChannel(BaseChannel):
             user_id=open_id,
             bot_id=self.config.app_id or "",
             metadata=enriched_metadata,
+            params=params,
         )
         await self._handle_message(inbound)
 
@@ -2088,8 +2110,15 @@ class FeishuChannel(BaseChannel):
         Args:
             data: 飞书消息事件数据
         """
+        try:
+            msg_id = data.event.message.message_id if data and data.event and data.event.message else "unknown"
+        except Exception:
+            msg_id = "unknown"
+        logger.info("[FeishuChannel] _on_message_sync 被调用: message_id=%s", msg_id)
         if self._main_loop and self._main_loop.is_running():
             asyncio.run_coroutine_threadsafe(self._on_message(data), self._main_loop)
+        else:
+            logger.warning("[FeishuChannel] _on_message_sync 主事件循环未运行，消息被丢弃: message_id=%s", msg_id)
 
     async def _on_message(self, data: "P2ImMessageReceiveV1") -> None:
         """
@@ -2103,12 +2132,22 @@ class FeishuChannel(BaseChannel):
             message = event.message
             sender = event.sender
 
+            logger.info(
+                "[FeishuChannel] _on_message 收到消息: message_id=%s sender_type=%s chat_id=%s message_type=%s",
+                message.message_id,
+                sender.sender_type,
+                getattr(message, "chat_id", ""),
+                message.message_type,
+            )
+
             # 消息去重检查
             if self._is_duplicate_message(message.message_id):
+                logger.info("[FeishuChannel] 消息被去重过滤: message_id=%s", message.message_id)
                 return
 
             # 跳过机器人发送的消息
             if sender.sender_type == "bot":
+                logger.info("[FeishuChannel] 跳过机器人消息: message_id=%s", message.message_id)
                 return
 
             # 群聊数字分身模式下不自动点赞
@@ -2141,6 +2180,7 @@ class FeishuChannel(BaseChannel):
                     logger.warning(f"[FeishuChannel] 发送Team模式提示失败: {e}")
                 return
             if not content and not file_info:
+                logger.info("[FeishuChannel] 消息内容为空且无文件，跳过: message_id=%s content=%r file_info=%r", message.message_id, content, file_info)
                 return
 
             # 提取发送者open_id
@@ -2430,6 +2470,7 @@ class FeishuChannel(BaseChannel):
             bool: True表示消息重复，False表示新消息
         """
         if message_id in self._message_dedup_cache:
+            logger.info("[FeishuChannel] 消息重复: message_id=%s (缓存大小=%d)", message_id, len(self._message_dedup_cache))
             return True
 
         self._message_dedup_cache[message_id] = None

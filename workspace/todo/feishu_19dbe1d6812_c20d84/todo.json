@@ -1,0 +1,19 @@
+
+[
+  {
+    "id": "8a6e377a-ddb6-4742-b27c-f2afda83c543",
+    "content": "执行 ebike-governance 全流程：感知→决策→执行→复盘",
+    "activeForm": "正在执行 ebike-governance 全流程",
+    "status": "in_progress",
+    "createdAt": "2026-04-24T06:38:28.300706+00:00",
+    "updatedAt": "2026-04-24T06:38:32.871284+00:00"
+  },
+  {
+    "id": "8bcd5ed8-b3e5-4c26-a3b1-8fa6afe62cdf",
+    "content": "生成交互式网页报告并发送给用户",
+    "activeForm": "Executing 生成交互式网页报告并发送给用户",
+    "status": "pending",
+    "createdAt": "2026-04-24T06:38:28.300779+00:00",
+    "updatedAt": "2026-04-24T06:38:28.300779+00:00"
+  }
+]

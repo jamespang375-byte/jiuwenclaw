@@ -566,10 +566,10 @@ def register_cli_handlers(bind: CliHandlersBindParams) -> None:
 
         try:
             try:
-                response = await _probe(1)
+                response = await _probe(8)
             except Exception as first_exc:  # noqa: BLE001
                 logger.info(
-                    "[cli config.validate_model] max_tokens=1 failed, retrying with 16: %s",
+                    "[cli config.validate_model] max_tokens=8 failed, retrying with 16: %s",
                     first_exc,
                 )
                 response = await _probe(16)
@@ -591,7 +591,14 @@ def register_cli_handlers(bind: CliHandlersBindParams) -> None:
         else:
             content = str(response)
 
-        if not (isinstance(content, str) and content.strip()):
+        # Reasoning models may return empty content while reasoning_content is present
+        reasoning_content = ""
+        if hasattr(response, "reasoning_content"):
+            reasoning_content = response.reasoning_content or ""
+        elif isinstance(response, dict):
+            reasoning_content = response.get("reasoning_content", "") or ""
+
+        if not (isinstance(content, str) and content.strip()) and not (isinstance(reasoning_content, str) and reasoning_content.strip()):
             await channel.send_response(
                 ws,
                 req_id,
