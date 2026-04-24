@@ -585,6 +585,16 @@ class _SpaStaticHandler(SimpleHTTPRequestHandler):
                     except Exception as exc:  # noqa: BLE001
                         self._write_json(500, {"error": "generate_failed", "detail": str(exc)})
                         return
+                # 对缺失的 todo.json 返回空数组，避免前端控制台 404 噪音
+                if file_arg.replace("\\", "/").endswith("/todo.json"):
+                    body = b"[]"
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers()
+                    if self.command != "HEAD":
+                        self.wfile.write(body)
+                    return
                 if not full_path.exists():
                     self._write_json(404, {"error": "file_not_found", "fullPath": str(full_path)})
                     return

@@ -452,12 +452,25 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
             answers: answers,
           });
         } else {
-          // 否则发送 chat.user_answer（自进化确认）
+          // 自进化 / skill 中断确认：先发送 chat.user_answer，再发送 chat.send 触发 Agent 重新调用
           await request('chat.user_answer', {
             session_id: sessionId,
             request_id: requestId,
             answers,
           });
+          // 构造用户确认文本，让 Agent 收到消息后重新调用 skill
+          const firstAnswer = answers[0];
+          const selected = firstAnswer?.selected_options?.[0] || '';
+          const customInput = firstAnswer?.custom_input || '';
+          const queryText = customInput
+            ? `${selected}（备注：${customInput}）`
+            : selected;
+          if (queryText) {
+            await request('chat.send', {
+              session_id: sessionId,
+              query: queryText,
+            });
+          }
         }
         setPendingQuestion(null);
       } catch (error) {
