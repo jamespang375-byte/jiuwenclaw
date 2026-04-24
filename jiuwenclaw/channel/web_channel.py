@@ -194,8 +194,24 @@ class WebChannel(BaseChannel):
 
             file_url = file_info.get("url") or file_info.get("uri") or ""
             file_name = file_info.get("name") or file_info.get("filename") or "unknown_file"
+            base64_data = file_info.get("base64_data") or ""
 
-            if file_url:
+            if base64_data:
+                try:
+                    import base64
+
+                    # 支持 data:image/png;base64,xxx 格式
+                    if base64_data.startswith("data:"):
+                        base64_data = base64_data.split(",", 1)[1]
+                    file_content = base64.b64decode(base64_data)
+                    os.makedirs(workspace_dir, exist_ok=True)
+                    file_path = os.path.join(workspace_dir, file_name)
+                    with open(file_path, "wb") as f:
+                        f.write(file_content)
+                    file_info["path"] = file_path
+                except Exception as e:
+                    logger.warning("WebChannel base64 文件保存失败: {}", e)
+            elif file_url:
                 file_content = await self._download_file(file_url)
                 if file_content:
                     try:

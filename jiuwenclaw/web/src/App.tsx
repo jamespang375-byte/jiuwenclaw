@@ -35,6 +35,7 @@ import {
 import { useWebSocket } from './hooks';
 import { webRequest } from './services/webClient';
 import { AgentMode, UserAnswer, ModelEntry } from './types';
+import { ImageAttachment } from './types/image';
 import { useSessionStore, useChatStore, useTodoStore } from './stores';
 import { useTranslation } from 'react-i18next';
 import i18n from './i18n';
@@ -772,9 +773,9 @@ function AppContent() {
     void switchMode(sessionId, mode);
   }, [sessionId, switchMode]);
 
-  const handleSendMessage = useCallback((content: string) => {
+  const handleSendMessage = useCallback((content: string, images?: ImageAttachment[]) => {
     if (!sessionId || sessionId === 'new') return;
-    void sendMessage(content, sessionId);
+    void sendMessage(content, sessionId, images);
   }, [sendMessage, sessionId]);
 
   const handleInterrupt = useCallback((newInput?: string) => {

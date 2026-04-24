@@ -71,6 +71,8 @@
     "waitingTasksCount": "Waiting tasks ({{count}})",
     "removeTask": "Remove task",
     "holdToSpeak": "Hold to speak",
+    "uploadImage": "Upload image",
+    "removeImage": "Remove image",
     "send": "Send (Enter)",
     "modelSelector": {
       "tooltip": "Switch the model used for chat"

@@ -1,13 +1,14 @@
-import { useState, useRef, useCallback, KeyboardEvent, PointerEvent as ReactPointerEvent, useEffect, CSSProperties } from 'react';
+import { useState, useRef, useCallback, KeyboardEvent, PointerEvent as ReactPointerEvent, useEffect, CSSProperties, ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSpeechRecognition } from '../../hooks';
 import { stopAllTts } from '../../utils';
 import { useChatStore, useSessionStore } from '../../stores';
 import { AgentMode } from '../../types';
+import { ImageAttachment } from '../../types/image';
 import clsx from 'clsx';
 
 interface InputAreaProps {
-  onSubmit: (content: string) => void;
+  onSubmit: (content: string, images: ImageAttachment[]) => void;
   onInterrupt: (newInput?: string) => void;
   onSwitchMode: (mode: AgentMode) => void;
   isProcessing: boolean;
@@ -24,7 +25,9 @@ export function InputArea({
   const [pendingVoiceText, setPendingVoiceText] = useState('');
   const [showModeSwitchModal, setShowModeSwitchModal] = useState(false);
   const [pendingMode, setPendingMode] = useState<AgentMode | null>(null);
+  const [selectedImages, setSelectedImages] = useState<ImageAttachment[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const autoSendTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isComposingRef = useRef(false);
   const activePointerIdRef = useRef<number | null>(null);
@@ -88,11 +91,11 @@ export function InputArea({
 
         setTimeout(() => {
           if (isTeamMode) {
-            onSubmit(finalText);
+            onSubmit(finalText, []);
           } else if (isInterruptible) {
             onInterrupt(finalText);
           } else {
-            onSubmit(finalText);
+            onSubmit(finalText, []);
           }
           setInputValue('');
           if (textareaRef.current) {
@@ -113,14 +116,16 @@ export function InputArea({
 
   const handleSubmit = useCallback(() => {
     const trimmed = (inputValue + pendingVoiceText).trim();
-    if (!trimmed) return;
+    if (!trimmed && selectedImages.length === 0) return;
 
     if (isListening) {
       stopListening();
     }
 
+    const imagesToSend = [...selectedImages];
+
     if (isTeamMode) {
-      onSubmit(trimmed);
+      onSubmit(trimmed, imagesToSend);
     } else if (isInterruptible) {
       if (isAgentMode) {
         addToTaskQueue(trimmed);
@@ -128,15 +133,16 @@ export function InputArea({
         onInterrupt(trimmed);
       }
     } else {
-      onSubmit(trimmed);
+      onSubmit(trimmed, imagesToSend);
     }
     setInputValue('');
     setPendingVoiceText('');
+    setSelectedImages([]);
 
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
-  }, [inputValue, pendingVoiceText, isInterruptible, isListening, onSubmit, onInterrupt, stopListening, isAgentMode, isTeamMode, addToTaskQueue, setInputValue]);
+  }, [inputValue, pendingVoiceText, selectedImages, isInterruptible, isListening, onSubmit, onInterrupt, stopListening, isAgentMode, isTeamMode, addToTaskQueue, setInputValue]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -153,6 +159,45 @@ export function InputArea({
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
     }
+  }, []);
+
+  const handleImageSelect = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const imageFiles = Array.from(files).filter((f) => f.type.startsWith('image/'));
+    if (imageFiles.length === 0) {
+      e.target.value = '';
+      return;
+    }
+
+    const readFile = (file: File): Promise<ImageAttachment> =>
+      new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const preview = event.target?.result as string;
+          resolve({ file, preview: preview || '' });
+        };
+        reader.onerror = () => resolve({ file, preview: '' });
+        reader.readAsDataURL(file);
+      });
+
+    Promise.all(imageFiles.map(readFile)).then((results) => {
+      const valid = results.filter((r) => r.preview);
+      if (valid.length > 0) {
+        setSelectedImages((prev) => [...prev, ...valid]);
+      }
+    });
+
+    e.target.value = '';
+  }, []);
+
+  const handleRemoveImage = useCallback((index: number) => {
+    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
   const handleVoiceStart = useCallback(() => {
@@ -211,6 +256,7 @@ export function InputArea({
     if (isListening || (isInterruptible && !isTeamMode)) return;
     setInputValue('');
     setPendingVoiceText('');
+    setSelectedImages([]);
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
@@ -248,7 +294,7 @@ export function InputArea({
     ? inputValue + pendingVoiceText + interimTranscript
     : inputValue + pendingVoiceText;
 
-  const canSend = inputValue.trim().length > 0 || isListening;
+  const canSend = inputValue.trim().length > 0 || isListening || selectedImages.length > 0;
   const modeIndex = Math.max(0, modes.findIndex((m) => m.value === mode));
 
   return (
@@ -294,6 +340,26 @@ export function InputArea({
         </div>
       )}
 
+      {selectedImages.length > 0 && (
+        <div className="chat-input-image-previews">
+          {selectedImages.map((img, idx) => (
+            <div key={idx} className="chat-input-image-preview">
+              <img src={img.preview} alt={img.file.name} className="chat-input-image-preview__thumb" />
+              <button
+                type="button"
+                className="chat-input-image-preview__remove"
+                onClick={() => handleRemoveImage(idx)}
+                title={t('chat.removeImage')}
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <textarea
         ref={textareaRef}
         value={displayValue}
@@ -314,6 +380,15 @@ export function InputArea({
         className="chat-input-textarea"
         rows={1}
         data-testid="chat-input"
+      />
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleFileChange}
+        className="hidden"
       />
 
       <div className="chat-input-toolbar">
@@ -355,6 +430,22 @@ export function InputArea({
           >
             <svg className="chat-input-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleImageSelect}
+            disabled={isListening}
+            className={cx(
+              'chat-input-btn',
+              isListening && 'chat-input-btn--disabled',
+            )}
+            title={t('chat.uploadImage')}
+          >
+            <svg className="chat-input-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </button>
 

@@ -8,6 +8,7 @@ import React, { useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useChatStore } from '../../stores';
 import { AgentMode, UserAnswer } from '../../types';
+import { ImageAttachment } from '../../types/image';
 import { MessageList } from './MessageList';
 import { InputArea } from './InputArea';
 import { SubtaskProgress } from './SubtaskProgress';
@@ -23,7 +24,7 @@ export interface ChatHistoryPagerProps {
 }
 
 interface ChatPanelProps {
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string, images?: ImageAttachment[]) => void;
   onInterrupt: (newInput?: string) => void;
   onSwitchMode: (mode: AgentMode) => void;
   isProcessing: boolean;

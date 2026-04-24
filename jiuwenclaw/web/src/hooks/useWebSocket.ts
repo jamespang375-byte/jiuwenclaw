@@ -20,9 +20,10 @@ import {
   AgentMode,
   Session,
   ToolResult,
- 	ToolCall,
+  ToolCall,
   UsageSummary,
 } from '../types';
+import { ImageAttachment } from '../types/image';
 import { useChatStore, useTodoStore, useSessionStore } from '../stores';
 import { webClient } from '../services/webClient';
 import i18n from '../i18n';
@@ -60,7 +61,7 @@ interface UseWebSocketReturn {
     params?: Record<string, unknown>,
     options?: WebRequestOptions
   ) => Promise<T>;
-  sendMessage: (content: string, sessionId: string) => Promise<void>;
+  sendMessage: (content: string, sessionId: string, images?: ImageAttachment[]) => Promise<void>;
   interrupt: (
     sessionId: string,
     intent: InterruptIntent,
@@ -256,18 +257,28 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
 
   // 发送聊天消息
   const sendMessage = useCallback(
-    async (content: string, sessionId: string) => {
-      if (!content.trim()) return;
+    async (content: string, sessionId: string, images?: ImageAttachment[]) => {
+      const trimmed = content.trim();
+      if (!trimmed && (!images || images.length === 0)) return;
 
       userInputVersionRef.current += 1;
       stopAllTts();
 
-      // 添加用户消息
+      // 构建 mediaItems 用于本地即时预览
+      const mediaItems: MediaItem[] | undefined = images?.map((img) => ({
+        type: 'image' as const,
+        mimeType: img.file.type,
+        filename: img.file.name,
+        base64Data: img.preview.split(',')[1],
+      }));
+
+      // 添加用户消息（包含图片预览）
       addMessage({
         id: `user-${Date.now()}`,
         role: 'user',
-        content,
+        content: trimmed,
         timestamp: new Date().toISOString(),
+        ...(mediaItems ? { mediaItems } : {}),
       });
 
       // 不再预先创建助手消息，而是在收到第一个 content_chunk 时创建
@@ -275,16 +286,24 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
 
       setProcessing(true);
       setThinking(true);
-      
+
       // 正常调用接口
       const currentMode = useSessionStore.getState().mode;
       const selectedModel = useSessionStore.getState().selectedModelName;
+
+      const files = images?.map((img) => ({
+        name: img.file.name,
+        mime_type: img.file.type,
+        base64_data: img.preview,
+      }));
+
       try {
         await request('chat.send', {
           session_id: sessionId,
-          content,
+          content: trimmed,
           mode: currentMode,
           ...(selectedModel ? { model_name: selectedModel } : {}),
+          ...(files && files.length > 0 ? { files } : {}),
         });
       } catch (error) {
         const webError = error as WebError;
