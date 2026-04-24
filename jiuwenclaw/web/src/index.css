@@ -726,7 +726,7 @@ select {
     border: 1px solid transparent;
     background: var(--card);
     border-radius: var(--radius-lg);
-    padding: 10px 14px;
+    padding: 8px 12px;
     min-width: 0;
   }
 
@@ -870,7 +870,7 @@ select {
   }
 
   .chat-text :where(p) {
-    margin: 0.5em 0;
+    margin: 0.35em 0;
   }
 
   .chat-text :where(p:first-child) {
@@ -882,7 +882,7 @@ select {
   }
 
   .chat-text :where(ul, ol) {
-    margin: 0.5em 0;
+    margin: 0.35em 0;
     padding-left: 1.25em;
   }
 
@@ -891,7 +891,7 @@ select {
   }
 
   .chat-text :where(h1, h2, h3, h4, h5, h6) {
-    margin: 0.8em 0 0.4em;
+    margin: 0.6em 0 0.3em;
     font-weight: 600;
     line-height: 1.35;
   }
@@ -901,7 +901,7 @@ select {
   .chat-text :where(h3, h4, h5, h6) { font-size: 1em; }
 
   .chat-text :where(blockquote) {
-    margin: 0.75em 0;
+    margin: 0.5em 0;
     padding-left: 0.75em;
     border-left: 3px solid var(--border);
     color: var(--text-muted);
@@ -914,8 +914,8 @@ select {
   }
 
   .chat-text :where(pre) {
-    margin-top: 0.75em;
-    padding: 10px 12px;
+    margin-top: 0.5em;
+    padding: 8px 10px;
     border-radius: var(--radius-md);
     border: 1px solid var(--border);
     background: var(--secondary);
@@ -941,6 +941,88 @@ select {
     border-radius: var(--radius-sm);
     border: 1px solid var(--border);
     background: var(--secondary);
+  }
+
+  /* ====== Markdown Tables (精美表格) ====== */
+  .chat-text :where(table) {
+    width: 100%;
+    max-width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin: 0.5em 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  }
+
+  .chat-text :where(thead) {
+    background: linear-gradient(180deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 85%, black) 100%);
+    color: white;
+  }
+
+  .chat-text :where(th) {
+    padding: 8px 12px;
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-align: left;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .chat-text :where(th:first-child) {
+    border-top-left-radius: var(--radius-md);
+  }
+
+  .chat-text :where(th:last-child) {
+    border-top-right-radius: var(--radius-md);
+  }
+
+  .chat-text :where(td) {
+    padding: 7px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  .chat-text :where(tbody tr:last-child td) {
+    border-bottom: none;
+  }
+
+  .chat-text :where(tbody tr:last-child td:first-child) {
+    border-bottom-left-radius: var(--radius-md);
+  }
+
+  .chat-text :where(tbody tr:last-child td:last-child) {
+    border-bottom-right-radius: var(--radius-md);
+  }
+
+  /* 斑马纹 */
+  .chat-text :where(tbody tr:nth-child(even)) {
+    background: color-mix(in srgb, var(--secondary) 50%, transparent);
+  }
+
+  :root[data-theme="light"] .chat-text :where(tbody tr:nth-child(even)) {
+    background: rgba(248, 250, 252, 0.8);
+  }
+
+  /* 悬停高亮 */
+  .chat-text :where(tbody tr:hover) {
+    background: color-mix(in srgb, var(--accent) 8%, var(--secondary));
+    transition: background 0.15s ease;
+  }
+
+  :root[data-theme="light"] .chat-text :where(tbody tr:hover) {
+    background: rgba(96, 165, 250, 0.08);
+  }
+
+  /* 表格容器滚动 */
+  .chat-text :where(.table-wrapper) {
+    overflow-x: auto;
+    margin: 0.5em 0;
+    border-radius: var(--radius-md);
   }
 
   /* Chat compose wrapper */

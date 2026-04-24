@@ -411,6 +411,11 @@ export function MessageItem({ message, autoSpeak = false }: MessageItemProps) {
                         >
                           {children}
                         </a>
+                      ),
+                      table: ({ node, children, ...props }) => (
+                        <div className="overflow-x-auto">
+                          <table {...props}>{children}</table>
+                        </div>
                       )
                     }}
                   >
@@ -422,7 +427,7 @@ export function MessageItem({ message, autoSpeak = false }: MessageItemProps) {
                 <MediaRenderer items={mediaItems} />
               )}
               {htmlLinks.length > 0 && (
-                <div className="mt-2">
+                <div className="mt-1.5">
                   {htmlLinks.map((link, idx) => (
                     <HtmlPreview key={`${link.url}-${idx}`} url={link.url} title={link.title} />
                   ))}
