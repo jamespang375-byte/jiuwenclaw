@@ -1,0 +1,43 @@
+
+[
+  {
+    "id": "bbb6ead2-ac6f-4830-a513-b12f3bb5ee32",
+    "content": "Step1 感知：扫描深圳市全市电动自行车隐患数据",
+    "activeForm": "扫描深圳市全市电动自行车隐患数据",
+    "status": "completed",
+    "createdAt": "2026-04-24T10:21:43.327809+00:00",
+    "updatedAt": "2026-04-24T10:21:56.946905+00:00"
+  },
+  {
+    "id": "88c6ac75-f7d2-49f2-b5c7-0316c3ee6de9",
+    "content": "Step2 决策：生成联合处置方案和工单",
+    "activeForm": "生成联合处置方案和工单",
+    "status": "completed",
+    "createdAt": "2026-04-24T10:21:43.327923+00:00",
+    "updatedAt": "2026-04-24T10:22:10.067161+00:00"
+  },
+  {
+    "id": "d7d1f767-92f0-49dd-b2d4-d60acd4ca9bb",
+    "content": "Step3 执行：派发工单并通知责任人",
+    "activeForm": "派发工单并通知责任人",
+    "status": "completed",
+    "createdAt": "2026-04-24T10:21:43.327931+00:00",
+    "updatedAt": "2026-04-24T10:22:23.359489+00:00"
+  },
+  {
+    "id": "a2b00bbf-9f04-44e8-9273-a616baaca002",
+    "content": "Step4 复盘：生成HTML交互报告和PDF报告",
+    "activeForm": "生成HTML交互报告和PDF报告",
+    "status": "completed",
+    "createdAt": "2026-04-24T10:21:43.327937+00:00",
+    "updatedAt": "2026-04-24T10:22:36.050382+00:00"
+  },
+  {
+    "id": "817f9079-d09b-45b7-8b65-e28473f7b958",
+    "content": "启动前端服务并提供访问链接",
+    "activeForm": "启动前端服务并提供访问链接",
+    "status": "cancelled",
+    "createdAt": "2026-04-24T10:21:43.327942+00:00",
+    "updatedAt": "2026-04-24T10:42:40.398019+00:00"
+  }
+]

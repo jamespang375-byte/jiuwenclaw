@@ -4,8 +4,11 @@
  * 在聊天流内以内联卡片形式展示用户审批请求（接收/拒绝），
  * 替代全屏大弹窗（UserQuestionModal）。
  *
- * 单问题模式：点击选项后立即提交。
- * 多问题模式（批量审批）：逐条选择后统一提交，并提供"全部接收"快捷操作。
+ * 支持模式：
+ * - 单问题模式：点击选项后立即提交（传统权限审批）
+ * - 确认模式（require_confirm）：选择后需点击确认按钮才提交（Skill 确认等）
+ * - 自定义输入（allow_custom_input）：提供 textarea 供用户补充信息
+ * - 多问题模式（批量审批）：逐条选择后统一提交
  */
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
@@ -23,15 +26,27 @@ export function InlineQuestionCard({ onSubmit }: InlineQuestionCardProps) {
   const { t } = useTranslation();
   const { pendingQuestion, setPendingQuestion } = useChatStore();
   const [selections, setSelections] = useState<Map<number, string>>(new Map());
+  const [customInputs, setCustomInputs] = useState<Map<number, string>>(new Map());
   const [submitted, setSubmitted] = useState(false);
 
   const requestId = pendingQuestion?.request_id;
   useEffect(() => {
     setSelections(new Map());
+    setCustomInputs(new Map());
     setSubmitted(false);
   }, [requestId]);
 
   const isBatch = (pendingQuestion?.questions.length ?? 0) > 1;
+
+  // 判断某个问题是否需要确认模式
+  const isRequireConfirm = useCallback((qIndex: number) => {
+    if (!pendingQuestion) return false;
+    const q = pendingQuestion.questions[qIndex];
+    if (q?.require_confirm) return true;
+    // 对于 skill_interrupt 来源且选项 >=3 个的问题，默认启用确认模式
+    if (pendingQuestion.source === 'skill_interrupt' && (q?.options.length ?? 0) >= 3) return true;
+    return false;
+  }, [pendingQuestion]);
 
   const allAnswered = useMemo(() => {
     if (!pendingQuestion) return false;
@@ -39,21 +54,30 @@ export function InlineQuestionCard({ onSubmit }: InlineQuestionCardProps) {
   }, [pendingQuestion, selections]);
 
   const buildAnswers = useCallback(
-    (selMap: Map<number, string>): UserAnswer[] => {
+    (selMap: Map<number, string>, inputMap: Map<number, string>): UserAnswer[] => {
       return (pendingQuestion?.questions ?? []).map((q, idx) => {
         const sel = selMap.get(idx);
-        if (sel) return { selected_options: [sel] };
-        return { selected_options: q.options.length > 0 ? [q.options[0].label] : [] };
+        const custom = inputMap.get(idx)?.trim();
+        if (sel) {
+          return {
+            selected_options: [sel],
+            ...(custom ? { custom_input: custom } : {}),
+          };
+        }
+        return {
+          selected_options: q.options.length > 0 ? [q.options[0].label] : [],
+          ...(custom ? { custom_input: custom } : {}),
+        };
       });
     },
     [pendingQuestion]
   );
 
   const doSubmit = useCallback(
-    (selMap: Map<number, string>) => {
+    (selMap: Map<number, string>, inputMap: Map<number, string>) => {
       if (!pendingQuestion) return;
       setSubmitted(true);
-      onSubmit(pendingQuestion.request_id, buildAnswers(selMap), pendingQuestion.source);
+      onSubmit(pendingQuestion.request_id, buildAnswers(selMap, inputMap), pendingQuestion.source);
       setPendingQuestion(null);
     },
     [pendingQuestion, buildAnswers, onSubmit, setPendingQuestion]
@@ -67,11 +91,22 @@ export function InlineQuestionCard({ onSubmit }: InlineQuestionCardProps) {
       next.set(questionIndex, optionLabel);
       setSelections(next);
 
-      if (!isBatch) {
-        doSubmit(next);
+      // 只有非批量且非确认模式下才自动提交
+      if (!isBatch && !isRequireConfirm(questionIndex)) {
+        doSubmit(next, customInputs);
       }
     },
-    [submitted, selections, isBatch, doSubmit]
+    [submitted, selections, isBatch, isRequireConfirm, doSubmit, customInputs]
+  );
+
+  const handleCustomInputChange = useCallback(
+    (questionIndex: number, value: string) => {
+      if (submitted) return;
+      const next = new Map(customInputs);
+      next.set(questionIndex, value);
+      setCustomInputs(next);
+    },
+    [submitted, customInputs]
   );
 
   const handleAcceptAll = useCallback(() => {
@@ -80,13 +115,25 @@ export function InlineQuestionCard({ onSubmit }: InlineQuestionCardProps) {
     const all = new Map<number, string>();
     pendingQuestion.questions.forEach((_, idx) => all.set(idx, acceptLabel));
     setSelections(all);
-    doSubmit(all);
-  }, [pendingQuestion, submitted, t, doSubmit]);
+    doSubmit(all, customInputs);
+  }, [pendingQuestion, submitted, t, doSubmit, customInputs]);
 
   const handleSubmitBatch = useCallback(() => {
     if (!allAnswered || submitted) return;
-    doSubmit(selections);
-  }, [allAnswered, submitted, selections, doSubmit]);
+    doSubmit(selections, customInputs);
+  }, [allAnswered, submitted, selections, customInputs, doSubmit]);
+
+  const handleSubmitSingle = useCallback(
+    (qIndex: number) => {
+      if (submitted || !selections.has(qIndex)) return;
+      const sel = new Map<number, string>();
+      sel.set(qIndex, selections.get(qIndex)!);
+      const inp = new Map<number, string>();
+      if (customInputs.has(qIndex)) inp.set(qIndex, customInputs.get(qIndex)!);
+      doSubmit(sel, inp);
+    },
+    [submitted, selections, customInputs, doSubmit]
+  );
 
   // Support skill evolution (skill_evolve_*) and new skill creation (skill_create_*)
   const isEvolution = (pendingQuestion?.request_id?.startsWith('skill_evolve_') ||
@@ -185,6 +232,9 @@ export function InlineQuestionCard({ onSubmit }: InlineQuestionCardProps) {
         >
           {pendingQuestion.questions.map((question, qIndex) => {
             const selectedLabel = selections.get(qIndex);
+            const needConfirm = isRequireConfirm(qIndex);
+            const allowCustom = question.allow_custom_input;
+            const customValue = customInputs.get(qIndex) ?? '';
 
             return (
               <div
@@ -281,6 +331,45 @@ export function InlineQuestionCard({ onSubmit }: InlineQuestionCardProps) {
                       </button>
                     );
                   })}
+
+                  {/* 自定义输入区域 */}
+                  {(allowCustom || needConfirm) && (
+                    <div className="mt-2">
+                      <textarea
+                        value={customValue}
+                        onChange={(e) => handleCustomInputChange(qIndex, e.target.value)}
+                        disabled={submitted}
+                        placeholder={allowCustom ? "补充信息（可选）..." : "备注/补充说明（可选）..."}
+                        className="w-full px-3 py-2 text-sm rounded-lg resize-none"
+                        style={{
+                          backgroundColor: 'var(--bg-elevated)',
+                          border: '1px solid var(--border)',
+                          color: 'var(--text)',
+                          minHeight: '60px',
+                          opacity: submitted ? 0.6 : 1,
+                        }}
+                        rows={2}
+                      />
+                    </div>
+                  )}
+
+                  {/* 单问题确认模式下的确认按钮 */}
+                  {needConfirm && !isBatch && !submitted && (
+                    <button
+                      onClick={() => handleSubmitSingle(qIndex)}
+                      disabled={!selectedLabel}
+                      className="w-full mt-1 px-4 py-2 text-sm font-medium text-white rounded-lg transition-opacity"
+                      style={{
+                        background: selectedLabel
+                          ? 'linear-gradient(135deg, var(--accent), var(--accent-2))'
+                          : 'var(--border)',
+                        opacity: selectedLabel ? 1 : 0.5,
+                        cursor: selectedLabel ? 'pointer' : 'not-allowed',
+                      }}
+                    >
+                      {t('chatUi.inlineQuestion.submit')}
+                    </button>
+                  )}
                 </div>
               </div>
             );

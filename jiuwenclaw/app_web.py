@@ -318,6 +318,9 @@ class _SpaStaticHandler(SimpleHTTPRequestHandler):
     def _is_file_api_route(self) -> bool:
         return urlparse(self.path).path.startswith("/file-api/")
 
+    def _is_skill_files_route(self) -> bool:
+        return urlparse(self.path).path.startswith("/skill-files/")
+
     def _is_websocket_upgrade(self) -> bool:
         upgrade = self.headers.get("Upgrade", "")
         connection = self.headers.get("Connection", "")
@@ -610,6 +613,43 @@ class _SpaStaticHandler(SimpleHTTPRequestHandler):
 
         self._write_json(404, {"error": "not_found"})
 
+    def _handle_skill_files_get(self, parsed) -> None:
+        """服务 skill 目录下的静态文件（HTML、图片、PDF 等）。
+
+        URL 格式: /skill-files/<skill-name>/<relative-path>
+        示例: /skill-files/ebike-governance/frontend/map_visualization.html
+        映射到: ~/.jiuwenclaw/agent/jiuwenclaw_workspace/skills/ebike-governance/frontend/map_visualization.html
+        """
+        req_path = unquote(parsed.path)
+        skill_rel = req_path[len("/skill-files/"):]
+        if "/" not in skill_rel:
+            self.send_error(400, "invalid skill file path")
+            return
+        skill_name, file_rel = skill_rel.split("/", 1)
+        # 技能实际安装在 workspace_root/jiuwenclaw_workspace/skills/ 下
+        skills_dir = Path(self.workspace_root) / "jiuwenclaw_workspace" / "skills"
+        target = (skills_dir / skill_name / file_rel).resolve()
+        in_skills = os.path.commonpath([str(skills_dir), str(target)]) == str(skills_dir)
+        if not in_skills or not target.exists() or not target.is_file():
+            self.send_error(404, "skill file not found")
+            return
+
+        # 直接读取并发送文件内容（避免 SimpleHTTPRequestHandler 的路径干扰）
+        import mimetypes
+        ctype = mimetypes.guess_type(str(target))[0] or "application/octet-stream"
+        try:
+            data = target.read_bytes()
+        except OSError as exc:
+            self.send_error(500, f"read failed: {exc}")
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        if self.command != "HEAD":
+            self.wfile.write(data)
+
     def _handle_file_api_post(self, parsed) -> None:
         if parsed.path == "/file-api/rebuild-agent-data":
             try:
@@ -687,6 +727,9 @@ class _SpaStaticHandler(SimpleHTTPRequestHandler):
         if self._is_file_api_route():
             self._handle_file_api_get(parsed)
             return
+        if self._is_skill_files_route():
+            self._handle_skill_files_get(parsed)
+            return
         if self._dispatch_proxy():
             return
         super().do_GET()
@@ -721,6 +764,10 @@ class _SpaStaticHandler(SimpleHTTPRequestHandler):
         self.send_error(405, "method not allowed")
 
     def do_HEAD(self) -> None:  # noqa: N802
+        parsed = urlparse(self.path)
+        if self._is_skill_files_route():
+            self._handle_skill_files_get(parsed)
+            return
         if self._dispatch_proxy():
             return
         super().do_HEAD()
@@ -734,6 +781,22 @@ class _SpaStaticHandler(SimpleHTTPRequestHandler):
     def send_head(self):
         parsed = urlparse(self.path)
         req_path = unquote(parsed.path)
+
+        # Skill files 路由：/skill-files/<skill-name>/<file-path>
+        if req_path.startswith("/skill-files/"):
+            skill_rel = req_path[len("/skill-files/"):]
+            if "/" in skill_rel:
+                skill_name, file_rel = skill_rel.split("/", 1)
+                # 技能实际安装在 workspace_root/jiuwenclaw_workspace/skills/ 下
+                skills_dir = Path(self.workspace_root) / "jiuwenclaw_workspace" / "skills"
+                target = (skills_dir / skill_name / file_rel).resolve()
+                in_skills = os.path.commonpath([str(skills_dir), str(target)]) == str(skills_dir)
+                if in_skills and target.exists() and target.is_file():
+                    self.path = str(target)
+                    return SimpleHTTPRequestHandler.send_head(self)
+            self.send_error(404, "skill file not found")
+            return None
+
         rel_path = req_path.lstrip("/") or "index.html"
 
         base_dir = Path(self.directory or os.getcwd()).resolve()

@@ -125,6 +125,10 @@ export interface Question {
   header: string;
   options: QuestionOption[];
   multi_select?: boolean;
+  /** 是否需要点击确认按钮后才提交（而非选中即提交） */
+  require_confirm?: boolean;
+  /** 是否允许自定义输入（显示 textarea） */
+  allow_custom_input?: boolean;
 }
 
 /**

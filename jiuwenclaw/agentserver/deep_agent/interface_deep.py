@@ -3224,6 +3224,30 @@ class JiuWenClawDeepAdapter:
                                 raw_output = result_info.get("rawOutput")
                             if raw_output is not None:
                                 result_payload["raw_output"] = raw_output
+                            # 支持 skill 在返回结果中嵌入 ask_user_question 事件
+                            ask_q = result_info.get("ask_user_question")
+                            if ask_q and isinstance(ask_q, dict):
+                                return {
+                                    "event_type": "chat.ask_user_question",
+                                    "request_id": ask_q.get("request_id", ""),
+                                    "questions": ask_q.get("questions", []),
+                                    "source": ask_q.get("source", "skill_interrupt"),
+                                }
+                            # 如果 result 是 JSON 字符串，尝试解析并提取 ask_user_question
+                            result_str = result_info.get("result")
+                            if isinstance(result_str, str):
+                                try:
+                                    result_dict = json.loads(result_str)
+                                    if isinstance(result_dict, dict) and result_dict.get("ask_user_question"):
+                                        ask_q = result_dict["ask_user_question"]
+                                        return {
+                                            "event_type": "chat.ask_user_question",
+                                            "request_id": ask_q.get("request_id", ""),
+                                            "questions": ask_q.get("questions", []),
+                                            "source": ask_q.get("source", "skill_interrupt"),
+                                        }
+                                except Exception:
+                                    pass
                     else:
                         result_payload = {"result": str(payload)}
                     return {

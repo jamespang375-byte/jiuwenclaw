@@ -10,11 +10,13 @@ import { Message } from '../../types';
 import { StreamingContent } from './StreamingContent';
 import { ToolCallDisplay } from './ToolCallDisplay';
 import { MediaRenderer } from './MediaRenderer';
+import { HtmlPreview, extractHtmlLinks } from './HtmlPreview';
 import { formatTimestamp, onTtsStop, sanitizeTtsText } from '../../utils';
 import { useSpeechSynthesis } from '../../hooks';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+
 
 interface MessageItemProps {
   message: Message;
@@ -355,6 +357,9 @@ export function MessageItem({ message, autoSpeak = false }: MessageItemProps) {
   const showCopy = Boolean(content) && !isStreaming;
   const isPlaying = audioBase64 ? isAudioPlaying : isSpeaking;
 
+  // 提取消息中的 HTML 链接用于内嵌预览
+  const htmlLinks = !isUser && !isStreaming ? extractHtmlLinks(content) : [];
+
   useEffect(() => {
     return () => {
       stopGeneratedAudio();
@@ -415,6 +420,13 @@ export function MessageItem({ message, autoSpeak = false }: MessageItemProps) {
               </div>
               {mediaItems && mediaItems.length > 0 && (
                 <MediaRenderer items={mediaItems} />
+              )}
+              {htmlLinks.length > 0 && (
+                <div className="mt-2">
+                  {htmlLinks.map((link, idx) => (
+                    <HtmlPreview key={`${link.url}-${idx}`} url={link.url} title={link.title} />
+                  ))}
+                </div>
               )}
             </>
           )}
